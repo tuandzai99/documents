@@ -1,0 +1,307 @@
+Core- Spring :
+
+			=========================== Tight-Coupling và cách Loosely coupled=====================================
+
++ Tight-coupling(Liên kết ràng buộc): Khái niệm trong java ám chỉ việc mối quan hệ giữa các Class quá chặt chẽ. Khi yêu cầu thay đổi logic hay một class bị lỗi sẽ dẫn tới ảnh hưởng tới toàn bộ các Class khác.
+
++ Loosely-coupled là cách ám chỉ việc làm giảm bớt sự phụ thuộc giữa các Class với nhau 
+
+=> Các Class giao tiếp với nhau thông qua interface or Abstracti
+
+####Issue: 
+- Class VeryComplex need call function Bubble Sort
+	public class Verycomplex {
+		BubbleSort bubbleSort = new BubbleSort();
+		public void handleComplex() {
+			bubbleSort.sort(); 
+		}
+	}
+- When we change logic in Class BubbleSort then it will effect to VeryComplex => We must change VeryComplex follow by BubbleSort 
+
+
+####Solution: use interface
+* 1 interface: SortAlgorithm
+	public interface SortAlogirthm {
+		void sort();
+	}
+
+
+* 2 Class implement SortAlgorithm: BubbleSort, QuickSort
+
+	public class BubbleSort implements SortAlgorithm {
+		@Override
+		public void sort() {
+			// Handle by BubbleSort
+		}
+	}
+	
+	public class QuickSort implements SortAlgorithm {
+		@Override
+		public void sort() {
+			// Handle by QuickSort
+		}
+	}
+
+
+
+
+* 1 Class phải cần dùng các thuật toán sắp xếp: VeryComplex
+
+	public class VeryComplex {
+
+		private SortAlgorithm sortAlgorithm;
+
+		public VeryComplex(SortAlgorithm sortAlgorithm) {
+			this.sortAlogithm = sortAlgorithm;
+		}
+
+		public void hanldeComplex() {
+			sortAlgorthm.sort();
+		}
+
+	}
+
+* 1 Class sử dụng class VeryComplex: Main
+
+	public class Main {
+		SortAlgorithm bubbleSort = new BubbleSort();
+		SortAlgorithm quickSort = new QuickSort();
+		
+		VeryComplex business1 = new VeryComplex(bubbleSort);
+		VeryComplex business2 = new VeryComplex(quickSort);
+		
+		business1.handleComplex(); // Call function Handle Sort by BubbleSort
+		business2.handleComplex(); // Call function Handle sort by QuickSort
+	}
+
+
+
+
+				======================= Dependency Injection (DI) is a design pattern, ...========================================
++ Là việc các Object nên phụ thuộc vào các Abstract Class và thể hiện chi tiết của nó sẽ được inject vào đối tượng lúc run time.
++ 1 Class a nằm trong class b thì a là dependency của class b
+ 
+### Issues: 
+- Các class không nên phụ thuộc vào các kế thừa cấp thấp
+- Nên phụ thuộc vào Abstraction
+
+#### Solution: Có 3 cách để inject dependency vào một đối tượng
+- Constructor injection
+- Setter injection
+- Interface injection
+
+
+Example: 
+### Issues: 
+	public class Girl {
+		private Bikini outfit; // Mỗi cô gái sẽ có 1 bộ bikini
+
+		public Girl() {
+			this.outfit = new Bikini(); // mặc bikini vào cho cô gái
+		}
+
+		public void showOutfit() {
+			outfit.wear();
+		}
+
+	}
+
+
+- Giả sử muốn cô gái mặc vay thay vì bikini thì phải thay đổi hết code => Complex
+
+### Solution: Tạo 1 interface Outfit
+
+public class interface Outfit {
+	void wear();
+}
+
+public class Bikini implement Outfit {
+ 
+	@Override
+	public void wear() {
+		// Wear Bikini
+	}
+}
+
+public class Dress implement Outfit {
+
+	@Override
+	public void wear() {
+		// Wear Dress
+	}
+}
+
+public class Girl {
+	private Outfit outfit;
+	
+	public Girl(Outfit outfit) {
+		this.outfit = outfit;
+	}
+	
+	public void showOutfit() {
+		outfit.wear();
+	}
+}
+
+				========================== IOC ( Inverson of controll): Framwork Container ( get(Gril.class) ) Chứa các dependency ===========================================
+
+
+				==================Run Spring boot==================
+
+
+* SpringApplication.run(App.class, args) => Command create Container. 
+
+- Sau đó nó tìm toàn bộ các dependency trong project và đưa vào Container
+- Spring đặt tên cho Container là ApplicationContext
+- Đặt tên cho các Dependency là Bean
+=> Để Spring biết đâu là dependency(Bean) => @Component
+
+
+				===================Anotaion @Component & @Autowired================
+
+### @Component
+
+- @Component là Anotation đánh đấu trên các Class để giúp Spring biết nó là 1 Bean
+- Spring sẽ tìm kiếm các các class được đánh dấu @Component thì nó sẽ tạo ra 1 Instance ( create Contructors) và đưa vào ApplicationContext để quản lý. 
+
+
+### @Autowired
+- @Autowired vào thuộc tính Class
+=> Spring Boot tự inject một instance của dependency khi tạo đối tượng
+
+- Các Bean được quản lý bên trong ApplicationContext đều là singleton
+- Tất cả những Bean được quản lý trong ApplicationContext đều chỉ được tạ ra một lần duy nhất và khi có Class yêu Cầu @Autowired thì nó sẽ lấy đối tượng có sẵn trong ApplicationContext để inject vào.
+- Trong TH muốn tạo 1 instance hoàn toàn mới thì đánh dâu @Scope("prototype")
+
+- Quá trình inject Bean xảy ra 3 cách sau(@Autowired): 
+
+	+ Class không có hàm Constructor hay Setter, Thì sẽ sử dụng JAVA Reflection để đưa đối tượng vào thuộc tính có đánh dầu @Autowired
+	+ Nếu có hàm Constructor thì sẽ inject Bean vào bởi tham số của hàm
+	+ Nếu có hàm Setter thì sẽ inject Bean vào bởi tham số của hàm 
+
+### Example: 
+
+public class interface Outfit {
+	void wear();
+}
+
+
+@Component
+public class Bikini implement Outfit {
+ 
+	@Override
+	public void wear() {
+		// Wear Bikini
+	}
+}
+
+public class Girl {
+
+	@Autowired 
+	private Outfit outfit;  //Class không có hàm Constructor hay Setter, Thì sẽ sử dụng JAVA Reflection để đưa đối tượng vào thuộc tính có đánh dầu @Autowired
+	
+	public Girl(Outfit outfit) {
+		this.outfit = outfit;
+	}
+	
+	public void showOutfit() {
+		outfit.wear();
+	}
+}
+
+
+
+
+
+#### issues @Autowired
+
+- Sử dụng @Autowired khi Spring Boot có chứa 2 Bean cùng loại trong Context
+=> Spring sẽ không biết sử dụng Bean nào để inject vào đối tượng.
+=> Best Practice khi dùng @Autowire nên dùng injection Constructor; ( Lombok: @RequireArgsConstructor) 
+
+#### Solution: 
+
+- Dùng @Primary hoặc @Qualifier
+
++ @Primary: là Anotation đánh dấu trên 1 Bean, giúp nó luôn được ưu tiên lựa chọn trong TH có nhiều Bean cùng loại trong Context
+
+public class interface Outfit {
+	void wear();
+}
+
+#### Example
+
+@Component
+@Primary
+public class Bikini implement Outfit {
+ 
+	@Override
+	public void wear() {
+		// Wear Bikini
+	}
+}
+
+@Component
+public class Dress implement Outfit {
+
+	@Override
+	public void wear() {
+		// Wear Dress
+	}
+}
+
+public class Girl {
+	@Autowired 
+	private Outfit outfit;  // New instance Bikini
+	
+	public Girl(Outfit outfit) {
+		this.outfit = outfit;
+	}
+	
+	public void showOutfit() {
+		outfit.wear();
+	}
+}
+
++ @Qualifier: xác định tên của một Bean mà bạn muốn chỉ định inject
+Note: Cần đặt tên cho Bean
+#### Example
+
+@Component("bikini")
+public class Bikini implement Outfit {
+ 
+	@Override
+	public void wear() {
+		// Wear Bikini
+	}
+}
+
+@Component("dress")
+public class Dress implement Outfit {
+
+	@Override
+	public void wear() {
+		// Wear Dress
+	}
+}
+
+public class Girl {
+	@Autowired // Nếu có hàm Constructor thì sẽ inject Bean vào bởi tham số của hàm
+	public Girl(@Qualifier("bikini) Outfit outfit) {
+		this.outfit = outfit;
+	}
+	
+	public void showOutfit() {
+		outfit.wear();
+	}
+}
+
+Spring Boot example: 
+ 	- https://github.com/lokeshgupta1981/Spring-Boot-Examples
+README github: 
+	- https://github.com/hocchudong/git-github-for-sysadmin
+	
+
+
+
+
